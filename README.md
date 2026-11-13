@@ -1,111 +1,110 @@
-<div align="center">
+# Mitra AI — production-oriented full-stack starter
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:000000,50:003a42,100:00f0ff&height=200&section=header&text=Mitra%20AI&fontSize=56&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=A%20multilingual%20voice%20assistant%20that%20answers%20out%20loud&descAlignY=58&descSize=18" width="100%" />
+Mitra is a voice-enabled AI assistant with a React/TypeScript client, Express API, PostgreSQL conversation storage, Redis-backed rate limiting, server-side Gemini/Mistral credentials, and SSE chat streaming.
 
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
-![Mistral AI](https://img.shields.io/badge/Mistral_AI-FA520F?style=for-the-badge&logoColor=white)
-![ElevenLabs](https://img.shields.io/badge/ElevenLabs-000000?style=for-the-badge&logoColor=white)
-![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-222222?style=for-the-badge&logo=githubpages&logoColor=white)
+## What is included
 
-### [🚀 **Live Demo**](https://adarsh705875.github.io/mitra-ai-voice-assistant/)
+- Email/password registration and login; passwords hashed with bcrypt.
+- JWT in an HttpOnly cookie (not localStorage); same-site cookie policy and origin checks.
+- Per-user chat throttling backed by Redis, plus IP-based authentication throttling.
+- PostgreSQL persistence for users, conversations, messages, and usage counters.
+- Server-side provider adapters for Gemini and Mistral.
+- Provider fallback, bounded retries for transient failures, normalized API errors, request IDs, and structured logging.
+- SSE streaming endpoint; the UI consumes incremental response events.
+- Voice input via browser SpeechRecognition, browser speech output, and optional ElevenLabs server-side TTS.
+- Docker Compose for app, PostgreSQL, and Redis.
+- GitHub Actions CI for dependency install, Prisma generation, tests, and build.
 
-</div>
+## Requirements
 
----
+- Node.js 22+
+- Docker Desktop (recommended for PostgreSQL and Redis)
+- Gemini and/or Mistral API key. ElevenLabs is optional.
 
-## 📖 About
+## Local development
 
-**Mitra** is a voice-enabled AI assistant that runs entirely in your browser. Tap the glowing orb and speak, or type a message. Mitra replies in text and reads the answer out loud, in the language you used.
+1. Copy `.env.example` to `.env`.
+2. Set a random `JWT_SECRET` (at least 32 characters) and add at least one provider key.
+3. Start infrastructure:
 
-## ✨ Features
+   ```bash
+   docker compose up -d postgres redis
+   ```
 
-- 🎙️ **Voice input** with the browser's Web Speech API
-- 🌐 **Multilingual:** English (India, US, UK), Hindi, Marathi and Kannada
-- 🧠 **Choose your AI:** Google Gemini (with a model picker) or Mistral AI as a fallback
-- 🔁 **Auto model fallback:** if a Gemini model is unavailable, Mitra tries the next one
-- 🔊 **Voice output:** ElevenLabs for a natural voice, or the browser's built-in voices
-- 💬 **Conversation memory** for the last few messages
-- 💡 **Animated orb** that glows while listening and pulses while speaking
-- 🔐 **Bring your own keys.** Keys are stored only in your browser's localStorage
-- ♿ Keyboard focus styles and reduced-motion support
-- 🧯 Clear error messages for bad keys, rate limits, network and microphone problems
+4. Install and prepare the database:
 
-## 🔑 How to use
+   ```bash
+   npm install
+   npm run db:generate
+   npm run db:migrate
+   ```
 
-1. Open the **Live Demo**.
-2. Open **Settings** and paste a **Gemini API key** from [Google AI Studio](https://aistudio.google.com). Or paste a **Mistral key** from [console.mistral.ai](https://console.mistral.ai).
-3. Pick a **Gemini model** (leave it on **Auto** if unsure) and your **Speech language**.
-4. *(Optional)* Add an **ElevenLabs key** for a more natural voice.
-5. Click **Save keys**, then tap the orb and talk, or type and press Enter.
+5. Start the API and Vite frontend:
 
-> 🔒 No API keys are stored in this repository or on any server. They stay in your browser.
+   ```bash
+   npm run dev
+   ```
 
-## 🌐 Languages and voices
+   - Frontend: http://localhost:5173
+   - API health: http://localhost:8080/api/health
 
-| What | How it works |
-|---|---|
-| You speak | Set **Speech language** in Settings so recognition matches your language |
-| Mitra replies | The AI answers in the same language and script you used |
-| Mitra speaks | Uses a voice installed on your device for that language |
+The first migration is created from `server/prisma/schema.prisma` by `prisma migrate dev`; commit the generated `server/prisma/migrations` directory. For a fresh checkout, create the initial migration once with `npm run db:migrate`, then commit it.
 
-If Mitra shows text but stays silent in Hindi, Marathi or Kannada, your device probably has no voice for that language. On Windows, go to **Settings → Time & language → Speech → Add voices**, then restart the browser. ElevenLabs language coverage differs from the browser voices, so try both if one sounds wrong.
+## Docker deployment
 
-## 🧰 Tech Stack
-
-| Part | Technology |
-|---|---|
-| Frontend | HTML, CSS, JavaScript (single file, no build step) |
-| Chat models | Google Gemini API, Mistral AI |
-| Text-to-speech | ElevenLabs, with browser speech synthesis as fallback |
-| Speech-to-text | Web Speech API |
-| Hosting | GitHub Pages |
-
-## 🏃 Run locally
+Set real production values in `.env` before running. Use a strong unique `JWT_SECRET`, real provider keys, and set `COOKIE_SECURE=true` when TLS terminates in front of the app.
 
 ```bash
-git clone https://github.com/Adarsh705875/mitra-ai-voice-assistant.git
-cd mitra-ai-voice-assistant
-python -m http.server 8000
+docker compose up --build -d
 ```
 
-Open `http://localhost:8000`. Use a local server rather than double-clicking the file, so the microphone permission works.
+The app listens on port 8080. Put it behind a TLS-enabled reverse proxy or deploy to a platform that provides HTTPS. Do not expose PostgreSQL or Redis publicly.
 
-## 🛠️ Troubleshooting
+## Deploying to a hosting provider
 
-| Problem | Fix |
-|---|---|
-| "Failed to fetch" / could not reach the AI service | Check your internet, turn off VPN or ad blockers, and open from `localhost` or GitHub Pages |
-| Gemini 404 | That model isn't available for your key. Pick another under **Settings → Gemini model** |
-| "Rejected the API key" | Re-paste the key and click **Save keys** |
-| Mic does nothing | Use Chrome or Edge, allow the microphone in the address bar, and check your input device |
-| Text appears but no voice | Install a voice for that language, or use English |
+This repository is container-ready, but it is **not live-deployed**: deployment requires your hosting account, domain (if any), and production secrets.
 
-## ⚠️ Limitations
+1. Create a managed PostgreSQL database and Redis instance.
+2. Deploy this repository using its `Dockerfile`.
+3. Configure `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `GEMINI_API_KEY` and/or `MISTRAL_API_KEY`, `CLIENT_ORIGIN`, `NODE_ENV=production`, and `COOKIE_SECURE=true`.
+4. Set the platform health check to `/api/health`.
+5. Ensure the platform runs the container command in the Dockerfile so Prisma migrations are applied.
+6. Test registration, login, chat streaming, refresh/re-login, rate limits, and logout over HTTPS.
 
-- Voice input works best in **Chrome and Edge**. Firefox does not support speech recognition, and Brave blocks it.
-- Speech recognition sends audio to the browser vendor's servers, so it needs an internet connection.
-- Calls go straight from your browser to Gemini, Mistral and ElevenLabs, so each user needs their own keys.
-- Free API tiers have rate limits.
-- Replies can sometimes be inaccurate.
+For same-origin deployment, set `CLIENT_ORIGIN` to the public app origin. If you split frontend and API origins, update CORS/cookie settings deliberately; cross-site cookies require `SameSite=None; Secure` and additional CSRF protection.
 
-## 🔮 Roadmap
+## API overview
 
-- [ ] Backend proxy so keys never touch the browser
-- [ ] Streaming replies
-- [ ] Chat history panel
-- [ ] Wake word ("Hey Mitra")
-- [ ] More languages
+- `GET /api/health` — health check (does not expose secrets).
+- `POST /api/auth/register` — `{ "email": "...", "password": "..." }`
+- `POST /api/auth/login` — same body.
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/conversations`
+- `POST /api/conversations`
+- `GET /api/conversations/:id/messages`
+- `POST /api/chat/stream` — `{ "message": "...", "conversationId": "..." }`; emits SSE events:
+  - `event: delta` with `{ "text": "..." }`
+  - `event: done` with `{ "conversationId": "...", "messageId": "..." }`
+  - `event: error` with normalized `{ "code": "...", "message": "..." }`
+- `POST /api/voice` — `{ "text": "..." }`; returns audio/mpeg when ElevenLabs is configured.
 
-## 👤 Author
+## Provider fallback and error normalization
 
-**Adarsh Kadam**: Game Developer · AI/ML Engineer · Data Analyst
+Provider priority is Gemini then Mistral when both are configured. Transient network, 408, 429, and 5xx failures receive bounded exponential-backoff retries. Authentication/configuration errors and invalid model errors are not retried. If a provider fails before producing output, Mitra switches to the next configured provider. Once an SSE response has emitted output, it cannot safely switch providers without duplicating or corrupting the answer; a normalized stream error is emitted instead.
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/adarsh-kadam-96414a302/)
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Adarsh705875)
-[![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:adarshkadam06@gmail.com)
+Normalized error codes include `AUTH_INVALID`, `RATE_LIMITED`, `PROVIDER_UNAVAILABLE`, `PROVIDER_AUTH`, `PROVIDER_MODEL`, `VALIDATION_ERROR`, and `INTERNAL_ERROR`. Logs include request IDs and provider/status metadata but never API keys, passwords, cookies, or message content.
 
-<div align="center">
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:00f0ff,100:000000&height=100&section=footer" width="100%" />
-</div>
+## Production hardening checklist
+
+Before handling real users:
+- Use managed PostgreSQL and Redis with backups, TLS, and restricted network access.
+- Set secrets in the hosting provider's secret manager; never commit `.env`.
+- Configure HTTPS, secure cookies, domain/origin allowlists, and a reverse proxy with request-size limits.
+- Add email verification, password reset, account deletion/export, and abuse monitoring if public registration is enabled.
+- Configure centralized logs, alerts, uptime monitoring, and database backup restore drills.
+- Review privacy policy, retention/deletion policy, and applicable data-protection obligations.
+- Consider a durable job queue for long-running voice/TTS workloads and a distributed tracing/metrics stack.
+- Run dependency/security scans and a load test against the actual hosting plan.
+
+This is a production-oriented baseline, not a certification or guarantee of production security. Review and test it in your deployment environment before public launch.
