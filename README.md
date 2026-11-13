@@ -15,7 +15,7 @@
 
 ### 🚀 Live Demo
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-00C7B7?style=for-the-badge&logo=googlechrome&logoColor=white)](YOUR_DEPLOYED_URL)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-00C7B7?style=for-the-badge&logo=googlechrome&logoColor=white)](https://expert-bassoon-v6gx5vpjjwvwcvx5-8080.app.github.dev/)
 
 Try Mitra AI directly in your browser.
 
